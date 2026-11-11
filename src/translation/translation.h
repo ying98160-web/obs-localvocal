@@ -7,7 +7,7 @@
 #include <functional>
 #include <memory>
 
-enum InputTokenizationStyle { INPUT_TOKENIZAION_M2M100 = 0, INPUT_TOKENIZAION_T5 };
+enum InputTokenizationStyle { INPUT_TOKENIZAION_M2M100 = 0, INPUT_TOKENIZAION_T5, INPUT_TOKENIZATION_NLLB };
 
 namespace ctranslate2 {
 class Translator;

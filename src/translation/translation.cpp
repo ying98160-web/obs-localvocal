@@ -112,7 +112,29 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 		std::vector<ctranslate2::TranslationResult> results;
 		std::vector<std::string> target_prefix;
 
-		if (translation_ctx.input_tokenization_style == INPUT_TOKENIZAION_M2M100) {
+		if (translation_ctx.input_tokenization_style == INPUT_TOKENIZATION_NLLB) {
+			// NLLB legacy SentencePiece format: text tokens, </s>, source language.
+			const auto nllb_language = [](const std::string &lang) -> std::string {
+				if (lang == "__ja__") return "jpn_Jpan";
+				if (lang == "__zh__") return "zho_Hans";
+				if (lang == "__en__") return "eng_Latn";
+				return "";
+			};
+			const std::string src = nllb_language(source_lang);
+			const std::string tgt = nllb_language(target_lang);
+			if (src.empty() || tgt.empty()) {
+				obs_log(LOG_ERROR, "NLLB: unsupported language pair %s -> %s",
+					source_lang.c_str(), target_lang.c_str());
+				return OBS_POLYGLOT_TRANSLATION_FAIL;
+			}
+			std::vector<std::string> input_tokens = translation_ctx.tokenizer(text);
+			input_tokens.push_back("</s>");
+			input_tokens.push_back(src);
+			target_prefix = {tgt};
+			obs_log(LOG_INFO, "NLLB source=%s target=%s", src.c_str(), tgt.c_str());
+			results = translation_ctx.translator->translate_batch(
+				{input_tokens}, {target_prefix}, *translation_ctx.options);
+		} else if (translation_ctx.input_tokenization_style == INPUT_TOKENIZAION_M2M100) {
 			// set input tokens
 			std::vector<std::string> input_tokens = {source_lang, "<s>"};
 			if (translation_ctx.add_context > 0 &&
