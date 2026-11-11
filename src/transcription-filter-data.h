@@ -156,6 +156,7 @@ struct transcription_filter_data {
 	bool process_while_muted = false;
 	bool rename_file_to_match_recording = false;
 	bool translate = false;
+	bool auto_jp_cn_translation = false;
 	std::string target_lang;
 	std::string translation_output;
 	bool enable_token_ts_dtw = false;

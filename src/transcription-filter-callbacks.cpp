@@ -400,6 +400,45 @@ void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_dat
 		send_caption_to_webvtt(possible_end_ts, result, str_copy, *gf);
 #endif
 
+	// Bilingual mode: use the existing subtitle source for Japanese and the
+	// existing local translation source for Simplified Chinese.  No extra OBS
+	// source is required. This mode intentionally bypasses buffered output,
+	// whose presentation callbacks have fixed output destinations.
+	if (gf->auto_jp_cn_translation && gf->translate) {
+		const std::string japanese_source = gf->text_source_name;
+		const std::string chinese_source = gf->translation_output;
+		if (japanese_source.empty() || chinese_source.empty() ||
+		    japanese_source == chinese_source || chinese_source == "none") {
+			obs_log(LOG_WARNING, "Auto JP/CN: configure two different OBS text sources");
+		} else if (result.language == "ja" || result.language == "zh") {
+			const std::string target = result.language == "ja" ? "__zh__" : "__ja__";
+			std::string translated;
+			// Cache must account for direction, not just the sentence text.
+			const std::string cache_key = result.language + ":" + str_copy;
+			if (gf->last_text_for_translation == cache_key) {
+				translated = gf->last_text_translation;
+			} else if (!str_copy.empty() &&
+				   translate(gf->translation_ctx, str_copy,
+					     result.language == "ja" ? "__ja__" : "__zh__",
+					     target, translated) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
+				gf->last_text_for_translation = cache_key;
+				gf->last_text_translation = translated;
+			} else {
+				translated.clear();
+			}
+			if (result.language == "ja") {
+				send_caption_to_source(japanese_source, str_copy, gf);
+				send_caption_to_source(chinese_source, translated, gf);
+			} else {
+				send_caption_to_source(japanese_source, translated, gf);
+				send_caption_to_source(chinese_source, str_copy, gf);
+			}
+		} else {
+			// English and other languages are intentionally not translated.
+			send_caption_to_source(japanese_source, "", gf);
+			send_caption_to_source(chinese_source, "", gf);
+		}
+	} else {
 	bool should_translate_cloud = (gf->translate_cloud_only_full_sentences
 					       ? result.result == DETECTION_RESULT_SPEECH
 					       : true) &&
@@ -470,6 +509,8 @@ void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_dat
 		output_text(gf, result, possible_end_ts, str_copy, gf->text_source_name,
 			    NO_TRANSLATION);
 	}
+
+	} // End bilingual mode / existing translation pipeline
 
 	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||
 				     result.result == DETECTION_RESULT_PARTIAL)) {

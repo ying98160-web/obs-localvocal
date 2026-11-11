@@ -278,6 +278,8 @@ void add_translation_cloud_group_properties(obs_properties_t *ppts)
 	obs_property_set_modified_callback(prop_translate_cloud_provider,
 					   translation_cloud_provider_selection_callback);
 
+	obs_properties_add_bool(translation_group, "auto_jp_cn_translation",
+				"Auto JP/CN translation (Japanese top / Chinese bottom)");
 	// add target language selection
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_cloud_group, "translate_cloud_target_language", MT_("target_language"),
@@ -739,6 +741,7 @@ void transcription_filter_defaults(obs_data_t *s)
 
 	// translation options
 	obs_data_set_default_bool(s, "translate", false);
+	obs_data_set_default_bool(s, "auto_jp_cn_translation", false);
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
 	obs_data_set_default_int(s, "translate_add_context", 1);
 	obs_data_set_default_bool(s, "translate_only_full_sentences", true);
