@@ -395,6 +395,7 @@ void add_translation_group_properties(obs_properties_t *ppts)
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(prop_token_style, "M2M100 Tokens", INPUT_TOKENIZAION_M2M100);
 	obs_property_list_add_int(prop_token_style, "T5 Tokens", INPUT_TOKENIZAION_T5);
+	obs_property_list_add_int(prop_token_style, "NLLB Tokens (JP/CN)", INPUT_TOKENIZATION_NLLB);
 
 	// add translation options: beam_size, max_decoding_length, repetition_penalty, no_repeat_ngram_size, max_input_length, sampling_temperature
 	obs_properties_add_float_slider(translation_group, "translation_sampling_temperature",
